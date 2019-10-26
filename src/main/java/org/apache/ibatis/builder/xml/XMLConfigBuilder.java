@@ -373,6 +373,7 @@ public class XMLConfigBuilder extends BaseBuilder {
       for (XNode child : parent.getChildren()) {
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
+          // 自动扫描包下所有映射器
           configuration.addMappers(mapperPackage);
         } else {
           String resource = child.getStringAttribute("resource");
