@@ -34,8 +34,13 @@ import java.util.List;
  * @author Clinton Begin
  */
 public final class MappedStatement {
-
+  /**
+   * 源文件地址
+   */
   private String resource;
+  /**
+   * mybatis 配置类
+   */
   private Configuration configuration;
   /**
    * nameSpace + id属性，唯一的

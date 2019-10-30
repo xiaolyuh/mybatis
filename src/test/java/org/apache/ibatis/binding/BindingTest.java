@@ -96,6 +96,7 @@ class BindingTest {
   void shouldFindPostsInList() {
     try (SqlSession session = sqlSessionFactory.openSession()) {
       BoundAuthorMapper mapper = session.getMapper(BoundAuthorMapper.class);
+      mapper.toString();
       List<Post> posts = mapper.findPostsInList(new ArrayList<Integer>() {{
         add(1);
         add(3);

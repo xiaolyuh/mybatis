@@ -248,7 +248,7 @@ public class Configuration {
   protected Class<?> configurationFactory;
 
   /**
-   * 映射器(Mapper) 注册器
+   * Mapper接口动态代理 注册器
    */
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
 
@@ -279,14 +279,38 @@ public class Configuration {
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
     .conflictMessageProducer((savedValue, targetValue) ->
       ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
+
+
+  /**
+   * 缓存注册器（二级缓存）
+   */
   protected final Map<String, Cache> caches = new StrictMap<>("Caches collection");
+
+  /**
+   * 结果集映射缓存（所有resultMap对象）
+   * key=nameSpace + id
+   */
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
+
+  /**
+   * insert和update节点的KeyGenerator 缓存
+   * key=nameSpace + id
+   */
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
 
+  /**
+   * 所有*mapper.xml文件
+   */
   protected final Set<String> loadedResources = new HashSet<>();
+
+  /**
+   * 所有*mapper.xml文件中的sql元素
+   * key=nameSpace + id
+   */
   protected final Map<String, XNode> sqlFragments = new StrictMap<>("XML fragments parsed from previous mappers");
 
+  //不完整的SQL语句
   protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<>();
   protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<>();
   protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<>();
