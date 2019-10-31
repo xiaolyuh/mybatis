@@ -1,27 +1,19 @@
 /**
- *    Copyright 2009-2019 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Copyright 2009-2019 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.ibatis.executor;
-
-import static org.apache.ibatis.executor.ExecutionPlaceholder.EXECUTION_PLACEHOLDER;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.cache.impl.PerpetualCache;
@@ -30,11 +22,7 @@ import org.apache.ibatis.executor.statement.StatementUtil;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.logging.jdbc.ConnectionLogger;
-import org.apache.ibatis.mapping.BoundSql;
-import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.mapping.ParameterMapping;
-import org.apache.ibatis.mapping.ParameterMode;
-import org.apache.ibatis.mapping.StatementType;
+import org.apache.ibatis.mapping.*;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.session.Configuration;
@@ -44,21 +32,47 @@ import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static org.apache.ibatis.executor.ExecutionPlaceholder.EXECUTION_PLACEHOLDER;
+
 /**
+ * 使用策略模式
+ *
  * @author Clinton Begin
  */
 public abstract class BaseExecutor implements Executor {
 
   private static final Log log = LogFactory.getLog(BaseExecutor.class);
 
+  /**
+   * 事务管理器
+   */
   protected Transaction transaction;
+
+  /**
+   * 装饰器
+   */
   protected Executor wrapper;
 
+  /**
+   * 延迟加载队列（线程安全）
+   */
   protected ConcurrentLinkedQueue<DeferredLoad> deferredLoads;
+  /**
+   * 本地缓存
+   */
   protected PerpetualCache localCache;
   protected PerpetualCache localOutputParameterCache;
   protected Configuration configuration;
 
+  /**
+   * 用于嵌套查询的的层级处理
+   */
   protected int queryStack;
   private boolean closed;
 
@@ -136,6 +150,9 @@ public abstract class BaseExecutor implements Executor {
     return query(ms, parameter, rowBounds, resultHandler, key, boundSql);
   }
 
+  /**
+   * 所有的查询操作最后都是由该方法来处理的
+   */
   @SuppressWarnings("unchecked")
   @Override
   public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
@@ -144,18 +161,24 @@ public abstract class BaseExecutor implements Executor {
       throw new ExecutorException("Executor was closed.");
     }
     if (queryStack == 0 && ms.isFlushCacheRequired()) {
+      // 清空本地缓存
       clearLocalCache();
     }
     List<E> list;
     try {
+      // 查询层次加一
       queryStack++;
+      // 查询一级缓存
       list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
       if (list != null) {
+        // 处理存储过程的OUT参数
         handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
       } else {
+        // 缓存未命中，查询数据库
         list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
       }
     } finally {
+      // 查询层次减一
       queryStack--;
     }
     if (queryStack == 0) {
@@ -197,10 +220,14 @@ public abstract class BaseExecutor implements Executor {
       throw new ExecutorException("Executor was closed.");
     }
     CacheKey cacheKey = new CacheKey();
+    // MappedStatement id = namespace + 方法名
     cacheKey.update(ms.getId());
+    // 分页参数
     cacheKey.update(rowBounds.getOffset());
     cacheKey.update(rowBounds.getLimit());
+    // sql 语句
     cacheKey.update(boundSql.getSql());
+    // 参数值
     List<ParameterMapping> parameterMappings = boundSql.getParameterMappings();
     TypeHandlerRegistry typeHandlerRegistry = ms.getConfiguration().getTypeHandlerRegistry();
     // mimic DefaultParameterHandler logic
@@ -221,6 +248,7 @@ public abstract class BaseExecutor implements Executor {
         cacheKey.update(value);
       }
     }
+    // 环境变量ID
     if (configuration.getEnvironment() != null) {
       // issue #176
       cacheKey.update(configuration.getEnvironment().getId());
@@ -268,16 +296,16 @@ public abstract class BaseExecutor implements Executor {
   }
 
   protected abstract int doUpdate(MappedStatement ms, Object parameter)
-      throws SQLException;
+    throws SQLException;
 
   protected abstract List<BatchResult> doFlushStatements(boolean isRollback)
-      throws SQLException;
+    throws SQLException;
 
   protected abstract <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql)
-      throws SQLException;
+    throws SQLException;
 
   protected abstract <E> Cursor<E> doQueryCursor(MappedStatement ms, Object parameter, RowBounds rowBounds, BoundSql boundSql)
-      throws SQLException;
+    throws SQLException;
 
   protected void closeStatement(Statement statement) {
     if (statement != null) {
@@ -291,16 +319,18 @@ public abstract class BaseExecutor implements Executor {
 
   /**
    * Apply a transaction timeout.
+   *
    * @param statement a current statement
    * @throws SQLException if a database access error occurs, this method is called on a closed <code>Statement</code>
-   * @since 3.4.0
    * @see StatementUtil#applyTransactionTimeout(Statement, Integer, Integer)
+   * @since 3.4.0
    */
   protected void applyTransactionTimeout(Statement statement) throws SQLException {
     StatementUtil.applyTransactionTimeout(statement, statement.getQueryTimeout(), transaction.getTimeout());
   }
 
   private void handleLocallyCachedOutputParameters(MappedStatement ms, CacheKey key, Object parameter, BoundSql boundSql) {
+    // 存储过程的特殊处理
     if (ms.getStatementType() == StatementType.CALLABLE) {
       final Object cachedParameter = localOutputParameterCache.getObject(key);
       if (cachedParameter != null && parameter != null) {
@@ -319,14 +349,18 @@ public abstract class BaseExecutor implements Executor {
 
   private <E> List<E> queryFromDatabase(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
     List<E> list;
+    // 添加缓存占位符
     localCache.putObject(key, EXECUTION_PLACEHOLDER);
     try {
       list = doQuery(ms, parameter, rowBounds, resultHandler, boundSql);
     } finally {
+      // 删除缓存占位符
       localCache.removeObject(key);
     }
+    // 将查询结果添加到本地缓存
     localCache.putObject(key, list);
     if (ms.getStatementType() == StatementType.CALLABLE) {
+      // 如果是存储过程则，缓存参数
       localOutputParameterCache.putObject(key, parameter);
     }
     return list;
@@ -379,7 +413,7 @@ public abstract class BaseExecutor implements Executor {
     public void load() {
       @SuppressWarnings("unchecked")
       // we suppose we get back a List
-      List<Object> list = (List<Object>) localCache.getObject(key);
+        List<Object> list = (List<Object>) localCache.getObject(key);
       Object value = resultExtractor.extractObjectFromList(list, targetType);
       resultObject.setValue(property, value);
     }

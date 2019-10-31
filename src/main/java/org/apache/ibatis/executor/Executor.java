@@ -36,6 +36,9 @@ public interface Executor {
 
   int update(MappedStatement ms, Object parameter) throws SQLException;
 
+  /**
+   * 所有的查询操作最后都是由该方法来处理的
+   */
   <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey cacheKey, BoundSql boundSql) throws SQLException;
 
   <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException;

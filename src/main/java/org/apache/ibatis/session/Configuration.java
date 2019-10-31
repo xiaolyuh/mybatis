@@ -750,9 +750,11 @@ public class Configuration {
   }
 
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
+    // 默认是使用ExecutorType.SIMPLE
     executorType = executorType == null ? defaultExecutorType : executorType;
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;
     Executor executor;
+    // 根据不同的执行器类型创建Executor，策略模式
     if (ExecutorType.BATCH == executorType) {
       executor = new BatchExecutor(this, transaction);
     } else if (ExecutorType.REUSE == executorType) {
@@ -760,9 +762,12 @@ public class Configuration {
     } else {
       executor = new SimpleExecutor(this, transaction);
     }
+    // 是否开启缓存
     if (cacheEnabled) {
+      // 使用缓存执行器（装饰器模式）
       executor = new CachingExecutor(executor);
     }
+    // 拦截链封装(封装插件)
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }

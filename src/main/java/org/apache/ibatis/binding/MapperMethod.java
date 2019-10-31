@@ -64,7 +64,8 @@ public class MapperMethod {
 
   public Object execute(SqlSession sqlSession, Object[] args) {
     Object result;
-    // 根据SQL类型，调用不同方法。这里我们可以看出，操作数据库都是通过 sqlSession 来实现的
+    // 根据SQL类型，调用不同方法。
+    // 这里我们可以看出，操作数据库都是通过 sqlSession 来实现的
     switch (command.getType()) {
       case INSERT: {
         Object param = method.convertArgsToSqlCommandParam(args);
@@ -82,16 +83,28 @@ public class MapperMethod {
         break;
       }
       case SELECT:
+        // 根据方法返回值类型来确认调用sqlSession的哪个方法
+
+        // 无返回值或者有结果处理器
         if (method.returnsVoid() && method.hasResultHandler()) {
           executeWithResultHandler(sqlSession, args);
           result = null;
-        } else if (method.returnsMany()) {
+        }
+        // 返回值是否为集合类型或数组
+        else if (method.returnsMany()) {
           result = executeForMany(sqlSession, args);
-        } else if (method.returnsMap()) {
+        }
+        // 返回值是否为Map
+        else if (method.returnsMap()) {
           result = executeForMap(sqlSession, args);
-        } else if (method.returnsCursor()) {
+        }
+        // 返回值是否为游标类型
+        else if (method.returnsCursor()) {
           result = executeForCursor(sqlSession, args);
-        } else {
+        }
+        // 查询单条记录
+        else {
+          // 参数解析
           Object param = method.convertArgsToSqlCommandParam(args);
           result = sqlSession.selectOne(command.getName(), param);
           if (method.returnsOptional()
@@ -148,8 +161,10 @@ public class MapperMethod {
 
   private <E> Object executeForMany(SqlSession sqlSession, Object[] args) {
     List<E> result;
+    // 将方法参数转换成SqlCommand参数
     Object param = method.convertArgsToSqlCommandParam(args);
     if (method.hasRowBounds()) {
+      // 获取分页参数
       RowBounds rowBounds = method.extractRowBounds(args);
       result = sqlSession.selectList(command.getName(), param, rowBounds);
     } else {
@@ -298,17 +313,17 @@ public class MapperMethod {
   public static class MethodSignature {
 
     /**
-     * 返回参数是否为集合类型或数组
+     * 返回值是否为集合类型或数组
      */
     private final boolean returnsMany;
 
     /**
-     * 返回参数是否为map
+     * 返回值是否为map
      */
     private final boolean returnsMap;
 
     /**
-     * 返回参数是否为void
+     * 返回值是否为void
      */
     private final boolean returnsVoid;
 
@@ -343,7 +358,7 @@ public class MapperMethod {
     private final Integer rowBoundsIndex;
 
     /**
-     * 参数解析器
+     * 参数名称解析器
      */
     private final ParamNameResolver paramNameResolver;
 

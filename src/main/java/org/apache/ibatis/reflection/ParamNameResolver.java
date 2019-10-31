@@ -1,19 +1,25 @@
 /**
- *    Copyright 2009-2018 the original author or authors.
- *
- *    Licensed under the Apache License, Version 2.0 (the "License");
- *    you may not use this file except in compliance with the License.
- *    You may obtain a copy of the License at
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *    Unless required by applicable law or agreed to in writing, software
- *    distributed under the License is distributed on an "AS IS" BASIS,
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *    See the License for the specific language governing permissions and
- *    limitations under the License.
+ * Copyright 2009-2018 the original author or authors.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package org.apache.ibatis.reflection;
+
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.binding.MapperMethod.ParamMap;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.ResultHandler;
+import org.apache.ibatis.session.RowBounds;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -22,12 +28,9 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.binding.MapperMethod.ParamMap;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.ResultHandler;
-import org.apache.ibatis.session.RowBounds;
-
+/**
+ * 参数名称解析器
+ */
 public class ParamNameResolver {
 
   private static final String GENERIC_NAME_PREFIX = "param";
@@ -35,9 +38,13 @@ public class ParamNameResolver {
   /**
    * <p>
    * The key is the index and the value is the name of the parameter.<br />
+   * key 是参数的索引位，value是参数名称.<br />
    * The name is obtained from {@link Param} if specified. When {@link Param} is not specified,
    * the parameter index is used. Note that this index could be different from the actual index
-   * when the method has special parameters (i.e. {@link RowBounds} or {@link ResultHandler}).
+   * when the method has special parameters (i.e. {@link RowBounds} or {@link ResultHandler}).<br />
+   * <p>
+   * 如果指定，则从Param获取名称。如果未指定Param，则使用参数索引位。<br />
+   * 注意，当方法具有特殊参数（即RowBounds或ResultHandler）时，此索引位可能与实际索引不同。<br />
    * </p>
    * <ul>
    * <li>aMethod(@Param("M") int a, @Param("N") int b) -&gt; {{0, "M"}, {1, "N"}}</li>
@@ -50,14 +57,17 @@ public class ParamNameResolver {
   private boolean hasParamAnnotation;
 
   public ParamNameResolver(Configuration config, Method method) {
+    // 获取参数的类型
     final Class<?>[] paramTypes = method.getParameterTypes();
+    // 获取参数的注解 @Param
     final Annotation[][] paramAnnotations = method.getParameterAnnotations();
     final SortedMap<Integer, String> map = new TreeMap<>();
     int paramCount = paramAnnotations.length;
     // get names from @Param annotations
+    // 从注解@Param中获取参数名称
     for (int paramIndex = 0; paramIndex < paramCount; paramIndex++) {
       if (isSpecialParameter(paramTypes[paramIndex])) {
-        // skip special parameters
+        // skip special parameters 跳过RowBounds和ResultHandler参数
         continue;
       }
       String name = null;
@@ -74,7 +84,7 @@ public class ParamNameResolver {
           name = getActualParamName(method, paramIndex);
         }
         if (name == null) {
-          // use the parameter index as the name ("0", "1", ...)
+          // use the parameter index as the name ("0", "1", ...) 使用参数的索引位作为参数名称（）
           // gcode issue #71
           name = String.valueOf(map.size());
         }
@@ -85,6 +95,7 @@ public class ParamNameResolver {
   }
 
   private String getActualParamName(Method method, int paramIndex) {
+    // 获取参数名称 arg3
     return ParamNameUtil.getParamNames(method).get(paramIndex);
   }
 
@@ -106,12 +117,15 @@ public class ParamNameResolver {
    * In addition to the default names, this method also adds the generic names (param1, param2,
    * ...).
    * </p>
+   *
+   * 将参数转换成 paramName->paramValue的格式
    */
   public Object getNamedParams(Object[] args) {
     final int paramCount = names.size();
     if (args == null || paramCount == 0) {
       return null;
     } else if (!hasParamAnnotation && paramCount == 1) {
+      // 没有@Param注解并且只有一个参数
       return args[names.firstKey()];
     } else {
       final Map<String, Object> param = new ParamMap<>();
