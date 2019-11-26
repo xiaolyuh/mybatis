@@ -59,6 +59,9 @@ public final class MappedStatement {
   private Cache cache;
   private ParameterMap parameterMap;
   private List<ResultMap> resultMaps;
+  /**
+   * 是否刷新缓存，将其设置为 true 后，只要语句被调用，都会导致本地缓存和二级缓存被清空，默认值：false。
+   */
   private boolean flushCacheRequired;
   private boolean useCache;
   private boolean resultOrdered;

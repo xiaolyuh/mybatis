@@ -727,20 +727,26 @@ public class Configuration {
   }
 
   public ParameterHandler newParameterHandler(MappedStatement mappedStatement, Object parameterObject, BoundSql boundSql) {
+    // 构建 ParameterHandler 参数处理器
     ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement, parameterObject, boundSql);
+    // 拦截链封装(封装插件)，责任链模式
     parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler);
     return parameterHandler;
   }
 
   public ResultSetHandler newResultSetHandler(Executor executor, MappedStatement mappedStatement, RowBounds rowBounds, ParameterHandler parameterHandler,
                                               ResultHandler resultHandler, BoundSql boundSql) {
+    // 构建结果集处理器
     ResultSetHandler resultSetHandler = new DefaultResultSetHandler(executor, mappedStatement, parameterHandler, resultHandler, boundSql, rowBounds);
+    // 拦截链封装(封装插件)，责任链模式
     resultSetHandler = (ResultSetHandler) interceptorChain.pluginAll(resultSetHandler);
     return resultSetHandler;
   }
 
   public StatementHandler newStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    // 通过RoutingStatementHandler来做路由进而找出真的StatementHandler（策略模式 + 装饰器模式）
     StatementHandler statementHandler = new RoutingStatementHandler(executor, mappedStatement, parameterObject, rowBounds, resultHandler, boundSql);
+    // 拦截链封装(封装插件)，责任链模式
     statementHandler = (StatementHandler) interceptorChain.pluginAll(statementHandler);
     return statementHandler;
   }
@@ -767,7 +773,7 @@ public class Configuration {
       // 使用缓存执行器（装饰器模式）
       executor = new CachingExecutor(executor);
     }
-    // 拦截链封装(封装插件)
+    // 拦截链封装(封装插件)，责任链模式
     executor = (Executor) interceptorChain.pluginAll(executor);
     return executor;
   }

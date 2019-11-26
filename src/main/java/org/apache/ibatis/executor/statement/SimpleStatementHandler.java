@@ -33,6 +33,7 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 /**
+ * JDBC {@link Statement} 执行模式
  * @author Clinton Begin
  */
 public class SimpleStatementHandler extends BaseStatementHandler {
@@ -84,6 +85,7 @@ public class SimpleStatementHandler extends BaseStatementHandler {
 
   @Override
   protected Statement instantiateStatement(Connection connection) throws SQLException {
+    // 实例化Statement
     if (mappedStatement.getResultSetType() == ResultSetType.DEFAULT) {
       return connection.createStatement();
     } else {
@@ -94,6 +96,7 @@ public class SimpleStatementHandler extends BaseStatementHandler {
   @Override
   public void parameterize(Statement statement) {
     // N/A
+    // 使用Statement是直接执行sql 所以没有参数
   }
 
 }

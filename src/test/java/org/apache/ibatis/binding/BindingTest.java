@@ -120,6 +120,7 @@ class BindingTest {
 
   @Test
   void shouldFindThreeSpecificPosts() {
+    // Mybatis源码测试1
     try (SqlSession session = sqlSessionFactory.openSession()) {
       BoundAuthorMapper mapper = session.getMapper(BoundAuthorMapper.class);
       List<Post> posts = mapper.findThreeSpecificPosts(1, new RowBounds(1, 1), 3, 5);

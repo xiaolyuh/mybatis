@@ -53,7 +53,7 @@ public class MapperMethod {
   private final SqlCommand command;
 
   /**
-   * 参数签名封装类
+   * 方法签名封装类
    */
   private final MethodSignature method;
 

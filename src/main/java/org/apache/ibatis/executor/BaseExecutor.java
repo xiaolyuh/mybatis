@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import static org.apache.ibatis.executor.ExecutionPlaceholder.EXECUTION_PLACEHOLDER;
 
 /**
- * 使用策略模式
+ * 使用模板设计模式
  *
  * @author Clinton Begin
  */
@@ -369,6 +369,7 @@ public abstract class BaseExecutor implements Executor {
   protected Connection getConnection(Log statementLog) throws SQLException {
     Connection connection = transaction.getConnection();
     if (statementLog.isDebugEnabled()) {
+      // 通过动态代理模式对Connection进行日志增强
       return ConnectionLogger.newInstance(connection, statementLog, queryStack);
     } else {
       return connection;
